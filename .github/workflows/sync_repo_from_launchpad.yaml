@@ -1,0 +1,37 @@
+name: Sync Repos
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    strategy:
+      matrix:
+        branch:
+          - ubuntu/master
+          - ubuntu/noble
+          - ubuntu/jammy
+          - ubuntu/focal
+          - ubuntu/bionic
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Sync repo
+        run: |
+          git config --global user.email "mirror-bot@gjolly.fr"
+          git config --global user.name "Mirror Bot"
+          git remote add launchpad https://git.launchpad.net/livecd-rootfs
+
+          git fetch launchpad
+          git reset --hard launchpad/${{ matrix.branch }}
+          git push --force origin ${{ matrix.branch }}
